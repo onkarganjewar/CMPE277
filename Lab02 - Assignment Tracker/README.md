@@ -12,8 +12,8 @@ User will first create an account in the application. User will then have the op
 * Used explicit intent for storing the information about user to be used later on such “id” of the user.
 
 ## Screenshots
-![front](https://cloud.githubusercontent.com/assets/14006620/16890136/c73960d0-4aa0-11e6-85dc-dc861200452b.png)
+![front 1](https://cloud.githubusercontent.com/assets/14006620/16890370/9544a3d0-4aa2-11e6-8063-99af022f2cac.png)
 
-![home](https://cloud.githubusercontent.com/assets/14006620/16890137/c73b3bbc-4aa0-11e6-9c6c-6bc68d85bb26.png)
+![home 1](https://cloud.githubusercontent.com/assets/14006620/16890371/9546527a-4aa2-11e6-9a57-9d6b6690afe4.png)
 
-![viewall](https://cloud.githubusercontent.com/assets/14006620/16890135/c7382d0a-4aa0-11e6-8fb0-2d46817d2151.png)
+![viewall 1](https://cloud.githubusercontent.com/assets/14006620/16890372/954a90e2-4aa2-11e6-8c37-32c855e6752c.png)
