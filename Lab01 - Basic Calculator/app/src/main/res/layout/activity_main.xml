@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:fillViewport="false">
+
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="fill_parent"
+    android:layout_height="fill_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.example.onkar.mycalculator.MainActivity">
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="67dp"
+        android:text="Enter first number "
+        android:id="@+id/digit1_textView"
+        android:layout_marginTop="25dp"
+        android:textSize="37dp"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true" />
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Enter second number"
+        android:id="@+id/digit2_textView"
+        android:textSize="37dp"
+        android:layout_marginTop="14dp"
+        android:layout_below="@+id/frameLayout"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Total"
+        android:id="@+id/totalTextView"
+        android:textIsSelectable="true"
+        android:textSize="37dp"
+        android:textAlignment="center"
+        android:layout_alignParentStart="true"
+        android:layout_below="@+id/calcButton"
+        android:layout_alignParentEnd="true" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="145dp"
+        android:layout_below="@+id/digit1_textView"
+        android:id="@+id/frameLayout"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true">
+        <!--android:layout_above="@+id/digit2_textView"-->
+        <!--android:layout_height="145dp"-->
+
+    <Button
+            android:layout_width="107dp"
+            android:layout_height="70dp"
+            android:text="+"
+            android:id="@+id/addBtn"
+            android:layout_gravity="left|top"
+            android:textStyle="bold"
+            android:textSize="35dp" />
+
+        <Button
+            android:layout_width="107dp"
+            android:layout_height="70dp"
+            android:text="-"
+            android:id="@+id/subBtn"
+            android:layout_gravity="center_horizontal|top"
+            android:textStyle="bold"
+            android:textSize="40dp" />
+
+        <Button
+            android:layout_width="107dp"
+            android:layout_height="70dp"
+            android:text="/"
+            android:id="@+id/divBtn"
+            android:layout_gravity="right|top"
+            android:textSize="35dp"
+            android:textStyle="bold" />
+
+        <Button
+            android:layout_width="107dp"
+            android:layout_height="70dp"
+            android:text="*"
+            android:id="@+id/mulBtn"
+            android:layout_gravity="left|bottom"
+            android:textSize="35dp"
+            android:textStyle="bold" />
+
+        <Button
+            android:layout_width="107dp"
+            android:layout_height="70dp"
+            android:text="%"
+            android:id="@+id/percBtn"
+            android:layout_gravity="center_horizontal|bottom"
+            android:textSize="35dp"
+            android:textStyle="bold" />
+
+        <Button
+            android:layout_width="107dp"
+            android:layout_height="70dp"
+            android:text="CLR"
+            android:id="@+id/clrBtn"
+            android:layout_gravity="right|bottom"
+            android:textSize="35dp"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <Button
+        android:layout_width="175dp"
+        android:layout_height="65dp"
+        android:text="CALCULATE"
+        android:id="@+id/calcButton"
+        android:layout_below="@+id/digit2_textView"
+        android:layout_centerHorizontal="true" />
+
+</RelativeLayout>
+</ScrollView>
