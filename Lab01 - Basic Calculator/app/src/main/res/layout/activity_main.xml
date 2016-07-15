@@ -17,7 +17,7 @@
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="67dp"
-        android:text="Enter first number "
+        android:hint="Enter first number "
         android:id="@+id/digit1_textView"
         android:layout_marginTop="25dp"
         android:textSize="37dp"
@@ -28,7 +28,7 @@
     <EditText
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Enter second number"
+        android:hint="Enter second number"
         android:id="@+id/digit2_textView"
         android:textSize="37dp"
         android:layout_marginTop="14dp"
@@ -39,7 +39,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Total"
+        android:hint="Total"
         android:id="@+id/totalTextView"
         android:textIsSelectable="true"
         android:textSize="37dp"
