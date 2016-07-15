@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:paddingBottom="@dimen/activity_vertical_margin"
+    android:paddingLeft="@dimen/activity_horizontal_margin"
+    android:paddingRight="@dimen/activity_horizontal_margin"
+    android:paddingTop="@dimen/activity_vertical_margin"
+    tools:context="com.simplelogin.assignment.Main2Activity">
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/topicTextView"
+        android:layout_below="@+id/fragment2"
+        android:layout_alignParentEnd="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="70dp"
+        android:hint="Enter assignment name"/>
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/subjectTextView"
+        android:layout_below="@+id/topicTextView"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="10dp"
+        android:hint="Enter name of the class"/>
+    <!--android:layout_above="@+id/dueTextView"-->
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="50dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/dueTextView"
+        android:layout_below="@+id/subjectTextView"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="10dp"
+        android:hint="Enter assignment due date"/>
+    <!--android:layout_above="@+id/notesTextView"-->
+
+    <EditText
+        android:layout_width="wrap_content"
+        android:layout_height="120dp"
+        android:textAppearance="?android:attr/textAppearanceLarge"
+        android:id="@+id/notesTextView"
+        android:layout_below="@+id/dueTextView"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true"
+        android:layout_marginTop="10dp"
+        android:hint="Enter any notes for assignment"/>
+    <!--android:layout_above="@+id/viewBtn"-->
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="View All"
+        android:id="@+id/viewBtn"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentStart="true"
+        android:layout_marginTop="20dp" />
+
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Create"
+        android:id="@+id/createBtn"
+        android:layout_marginLeft="39dp"
+        android:layout_alignTop="@+id/viewBtn"
+        android:layout_alignParentEnd="true" />
+
+    <fragment
+
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:name="layout.exitFragment"
+        android:id="@+id/fragment2"
+        tools:layout="@layout/fragment_exit"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        android:layout_alignParentEnd="true" />
+</RelativeLayout>
