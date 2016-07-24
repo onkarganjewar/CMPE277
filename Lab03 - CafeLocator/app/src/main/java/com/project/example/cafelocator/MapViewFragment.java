@@ -50,7 +50,7 @@ public class MapViewFragment extends Fragment {
 
         // Gets to GoogleMap from the MapView and does initialization stuff
         map = mapView.getMap();
-        map.getUiSettings().setMyLocationButtonEnabled(false);
+//        map.getUiSettings().setMyLocationButtonEnabled(true);
         map.setMyLocationEnabled(true);
 
         // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
@@ -62,7 +62,7 @@ public class MapViewFragment extends Fragment {
         Log.d("DEBUG",String.valueOf(latitude));
         Log.d("DEBUG",String.valueOf(longitude));
         // Updates the location and zoom of the MapView
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(43.1, -87.9), 10);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(43.1, -87.9), 14);
         map.animateCamera(cameraUpdate);
 
         return v;
@@ -85,6 +85,17 @@ public class MapViewFragment extends Fragment {
         super.onLowMemory();
         mapView.onLowMemory();
     }
+    public void setMarkers(LatLng latLng, String properAddress) {
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title(properAddress);
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        mCurrLocationMarker = map.addMarker(markerOptions);
+
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude,latLng.longitude), 15);
+        map.animateCamera(cameraUpdate);
+
+    }
     public void setLocation (double latitude, double longitude) {
     Log.d("DEBUG","IN mapview fragment setlocation");
         this.latitude = latitude;
@@ -96,13 +107,11 @@ public class MapViewFragment extends Fragment {
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
         mCurrLocationMarker = map.addMarker(markerOptions);
 
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 11);
-        map.animateCamera(cameraUpdate);
+//        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 11);
+//        map.animateCamera(cameraUpdate);
 
 //    Log.d("DEBUG",String.valueOf(latitude));
 //        Log.d("DEBUG",String.valueOf(longitude));
     }
-    public interface MapViewListener {
-        public void setLocation(double latitude, double longitude);
-    }
+
 }
