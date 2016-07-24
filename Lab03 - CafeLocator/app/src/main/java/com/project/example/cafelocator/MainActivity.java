@@ -1,5 +1,8 @@
 package com.project.example.cafelocator;
 
+import android.app.SearchManager;
+import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
@@ -12,9 +15,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.SearchView;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -40,21 +46,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
     private long FASTEST_INTERVAL = 2000; /* 2 sec */
-    private String searchStr;
-    private GoogleMap mMap;
     protected GoogleApiClient mGoogleApiClient;
     protected Location mLastLocation;
     protected Marker mCurrLocationMarker;
     protected LocationRequest mLocationRequest;
-    protected LocationListener locationListener;
-    protected LocationManager locationManager;
     protected double latitude, longitude;
     private EditText searchTxt;
     private Button searchBtn;
     private Geocoder geocoder;
-    private List<android.location.Address> addressList;
     private MapViewFragment mapFragment;
-    private Marker searchedLocMarker;
+    private static final String TAG = "MainActivity";
+    private String searchedLocation;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -67,36 +69,27 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         searchBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                onLocationSearch(v);
+                searchedLocation = searchTxt.getText().toString();
+                onLocationSearch(searchedLocation);
             }
         });
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
         }
-
+        handleIntent(getIntent());
         buildGoogleApiClient();
     }
 
-    private void getAddresses(List<android.location.Address> addressList) {
-        android.location.Address address = addressList.get(0);
-
-        LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
-
-        String properAddress = String.format("%s, %s",
-                address.getMaxAddressLineIndex() > 0 ? address.getAddressLine(0) : "",
-                address.getCountryName());
-        MarkerOptions markerOptions = new MarkerOptions();
-        markerOptions.position(latLng);
-        markerOptions.draggable(true);
-        markerOptions.title(properAddress);
-//        markerOptions.title("Searched Location");
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
-        searchedLocMarker = mMap.addMarker(markerOptions);
-
-//        mMap.addMarker(new MarkerOptions()
-//                .position(new LatLng(address.getLatitude(), address.getLongitude())).draggable(true)
-//                .title(properAddress)
-//                .icon(BitmapDescriptorFactory.fromResource(R.drawable.pin)));
+    private void handleIntent(Intent intent) {
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+            String query = intent.getStringExtra(SearchManager.QUERY);
+            //use the query to search your data somehow
+            Log.d("DEBUG",query);
+        }
+    }
+    @Override
+    protected void onNewIntent(Intent intent) {
+        handleIntent(intent);
     }
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -219,13 +212,41 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
 
     @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater inflater = getMenuInflater();
+        inflater.inflate(R.menu.options_menu, menu);
+        android.support.v7.widget.SearchView searchView = (android.support.v7.widget.SearchView) menu.findItem(R.id.search).getActionView();
+        searchView.setOnQueryTextListener(new android.support.v7.widget.SearchView.OnQueryTextListener() {
+
+            @Override
+            public boolean onQueryTextSubmit(String s) {
+                Log.d(TAG, "onQueryTextSubmit ");
+                Log.d(TAG, s);
+
+                onLocationSearch(s);
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String s) {
+                Log.d(TAG, "onQueryTextChange ");
+                return false;
+            }
+        });
+
+        return true;
+    }
+    @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
         Log.d("CREATION", "Connection failed due to gps");
     }
-    public void onLocationSearch(View view) {
 
-        String location = searchTxt.getText().toString();
-//        String location = "New York";
+
+
+    public void onLocationSearch(String location) {
+
+//        String location = searchTxt.getText().toString();
+//        location = searchedLocation;
         List<android.location.Address> addressList = null;
 
         if (location != null || !location.equals("")) {
