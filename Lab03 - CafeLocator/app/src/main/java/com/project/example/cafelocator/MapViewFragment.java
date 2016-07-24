@@ -85,11 +85,12 @@ public class MapViewFragment extends Fragment {
         super.onLowMemory();
         mapView.onLowMemory();
     }
+
     public void setMarkers(LatLng latLng, String properAddress) {
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
         markerOptions.title(properAddress);
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
         mCurrLocationMarker = map.addMarker(markerOptions);
 
         CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude,latLng.longitude), 15);
