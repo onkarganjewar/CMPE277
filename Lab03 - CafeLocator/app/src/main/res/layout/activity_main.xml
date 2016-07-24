@@ -9,8 +9,13 @@
     android:paddingTop="@dimen/activity_vertical_margin"
     tools:context="com.project.example.cafelocator.MainActivity">
 
-    <TextView
+
+    <fragment
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Hello World!" />
+        android:name="com.project.example.cafelocator.MapViewFragment"
+        android:id="@+id/fragment"
+        android:layout_alignParentTop="true"
+        android:layout_alignParentStart="true"
+        tools:layout="@layout/fragment_map_view" />
 </RelativeLayout>
