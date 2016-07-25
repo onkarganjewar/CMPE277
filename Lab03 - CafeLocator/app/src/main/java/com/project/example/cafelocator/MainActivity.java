@@ -77,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private EditText searchTxt;
     private Button searchBtn;
     private Geocoder geocoder;
-    private MapViewFragment mapFragment;
+
     private static final String TAG = "MainActivity";
     private String searchedLocation;
     private OkHttpClient client;
@@ -155,7 +155,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng);
-            markerOptions.title(properAddress);
+            markerOptions.title("Searched Position");
             markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
             Marker mCurrLocationMarker = map.addMarker(markerOptions);
 
