@@ -6,34 +6,7 @@
     android:orientation="vertical"
     tools:context="com.project.example.cafelocator.MainActivity">
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="5dp"
-
-        android:orientation="horizontal">
-
-        <EditText
-            android:id="@+id/searchTxt"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="4"
-            android:hint="Search Location Here" />
-
-
-        <Button
-            android:id="@+id/searchBtn"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_weight="0.5"
-            android:onClick="onMapSearch"
-            android:text="Search" />
-
-    </LinearLayout>
-
     <com.google.android.gms.maps.MapView android:id="@+id/mapview"
         android:layout_width="fill_parent"
         android:layout_height="fill_parent" />
-
-
 </LinearLayout>
