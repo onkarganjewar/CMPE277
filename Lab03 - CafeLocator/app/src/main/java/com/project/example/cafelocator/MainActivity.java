@@ -28,8 +28,11 @@ import com.google.android.gms.identity.intents.Address;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
+import com.google.android.gms.maps.MapView;
+import com.google.android.gms.maps.MapsInitializer;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.LatLng;
@@ -43,6 +46,7 @@ import org.json.JSONObject;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -61,7 +65,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LocationListener {
 
     ArrayList<HashMap<String, String>> productsList;
-
+    public MapView mapView;
+    public GoogleMap map;
     private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
     private long FASTEST_INTERVAL = 2000; /* 2 sec */
     protected GoogleApiClient mGoogleApiClient;
@@ -80,22 +85,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private Response response;
     public static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
+    public List<ResultsObject> resultsList = new ArrayList<ResultsObject>();
     private static final String TAG_SUCCESS = "success";
     private static final String TAG_MESSAGE = "message";
     private static final String TAG_RATING = "rating";
     private static final String TAG_ADDRESS = "address";
     private static final String TAG_NAME = "name";
     private HashMap<String, String> placesMap;
-//    private static final String TAG_POSTS = "posts";
-//    private static final String TAG_TIME = "time";
-//    private static final String TAG_ID = "id";
-
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        mapFragment = (MapViewFragment)getSupportFragmentManager().findFragmentById(R.id.fragment);
+        mapView = (MapView) findViewById(R.id.mapview);
+        mapView.onCreate(savedInstanceState);
+
+        // Gets to GoogleMap from the MapView and does initialization stuff
+        map = mapView.getMap();
+        map.setMyLocationEnabled(true);
+
+        // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
+        try {
+            MapsInitializer.initialize(this);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        // Updates the location and zoom of the MapView
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(43.1, -87.9), 14);
+        map.animateCamera(cameraUpdate);
         searchTxt = (EditText) findViewById(R.id.searchTxt);
         searchBtn = (Button) findViewById(R.id.searchBtn);
 
@@ -104,15 +121,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             public void onClick(View v) {
                 searchedLocation = searchTxt.getText().toString();
 
-//                String temp = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?location=37.3525714,-121.893204&radius=500&types=cafe&key=AIzaSyCk6xfq4jFcg6Qlz5Nlhn2iUug8pndfIP8";
-
                 try {
+                    getLocation(searchedLocation);
                     queryAPI(searchedLocation);
-//                    doGetRequest(temp);
-                } catch (IOException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
-//                onLocationSearch(searchedLocation);
             }
         });
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -120,6 +134,34 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         }
         handleIntent(getIntent());
         buildGoogleApiClient();
+
+    }
+
+    private void getLocation(String searchedLocation) {
+
+        List<android.location.Address> addressList = null;
+
+        if (searchedLocation != null || !searchedLocation.equals("")) {
+            geocoder = new Geocoder(this);
+            try {
+                addressList = geocoder.getFromLocationName(searchedLocation, 1);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+            android.location.Address address = addressList.get(0);
+            String properAddress = String.format("%s, %s",
+                    address.getMaxAddressLineIndex() > 0 ? address.getAddressLine(0) : "",
+                    address.getCountryName());
+            LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+            MarkerOptions markerOptions = new MarkerOptions();
+            markerOptions.position(latLng);
+            markerOptions.title(properAddress);
+            markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
+            Marker mCurrLocationMarker = map.addMarker(markerOptions);
+
+            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude, latLng.longitude), 8);
+            map.animateCamera(cameraUpdate);
+        }
     }
 
 
@@ -195,6 +237,47 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LocationServices.FusedLocationApi.requestLocationUpdates(mGoogleApiClient,
                 mLocationRequest, this);
     }
+    @Override
+    public void onResume() {
+        mapView.onResume();
+        super.onResume();
+    }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        mapView.onDestroy();
+    }
+
+    @Override
+    public void onLowMemory() {
+        super.onLowMemory();
+        mapView.onLowMemory();
+    }
+    public void setMarkers1(double lat, double lng, String properAddress) {
+
+        MarkerOptions markerOptions = new MarkerOptions();
+        LatLng latLng = new LatLng(lat,lng);
+        markerOptions.position(latLng);
+        markerOptions.title(properAddress);
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        Marker mCurrLocationMarker = map.addMarker(markerOptions);
+
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude, latLng.longitude), 15);
+        map.animateCamera(cameraUpdate);
+
+    }
+    public void setMarkers(LatLng latLng, String properAddress) {
+        MarkerOptions markerOptions = new MarkerOptions();
+        markerOptions.position(latLng);
+        markerOptions.title(properAddress);
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
+        Marker mCurrLocationMarker = map.addMarker(markerOptions);
+
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude,latLng.longitude), 15);
+        map.animateCamera(cameraUpdate);
+
+    }
 
     @Override
     public void onConnected(Bundle bundle) {
@@ -202,7 +285,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 mGoogleApiClient);
         latitude = mLastLocation.getLatitude();
         longitude = mLastLocation.getLongitude();
-        mapFragment = (MapViewFragment)getSupportFragmentManager().findFragmentById(R.id.fragment);
+        /*mapFragment = (MapViewFragment)getSupportFragmentManager().findFragmentById(R.id.fragment);
         if (mapFragment != null) {
             // If article frag is available, we're in two-pane layout...
 
@@ -227,7 +310,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             // Commit the transaction
             transaction.commit();
-        }
+        }*/
         if (mLastLocation != null) {
             Log.d("CREATION",String.valueOf(mLastLocation.getLatitude()));
             Log.d("CREATION",String.valueOf(mLastLocation.getLongitude()));
@@ -347,7 +430,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
         }
     }
-    private void queryAPI(String searchedLocation) throws IOException {
+    private List<ResultsObject> queryAPI(String searchedLocation) throws IOException {
         List<android.location.Address> addressList = null;
 
         if (searchedLocation != null || !searchedLocation.equals("")) {
@@ -360,42 +443,133 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             android.location.Address address = addressList.get(0);
             StringBuilder queryStr = getQueryString(address.getLatitude(),address.getLongitude());
 
-            doGetRequest(String.valueOf(queryStr));
+            List<ResultsObject> temp = doGetRequest1(String.valueOf(queryStr));
+            return temp;
+        }
+        return null;
+    }
+
+    private List<ResultsObject> doGetRequest1(String url) {
+        OkHttpClient client = new OkHttpClient();
 
 
-           /* OkHttpClient client = new OkHttpClient();
-            String jsonData = null, name, rating;
-            request = new Request.Builder().url(String.valueOf(queryStr)).build();
+        request = new Request.Builder()
+                .url(url)
+                .build();
+
+
+        client.newCall(request)
+                .enqueue(new Callback() {
+                    @Override
+                    public void onFailure(final Call call, IOException e) {
+                        // Error
+
+                        runOnUiThread(new Runnable() {
+                            @Override
+                            public void run() {
+                                // For the example, you can show an error dialog or a toast
+                                // on the main UI thread
+                                Log.d("JSON","FAILED");
+                            }
+                        });
+                    }
+
+                    @Override
+                    public void onResponse(Call call, final Response response) {
+                        String geometry,name,temp,rating=null, vicinity;
+
+                        JSONObject geometryObject, locationObject;
+                        try {
+                            String res = response.body().string();
+                            JSONObject Jobject = new JSONObject(res);
+                            JSONArray Jarray = Jobject.getJSONArray("results");
+//                            geometryObject = Jobject.getJSONObject("geometry");
+                            Log.d("JSON","This is how array looks like ####"+Jarray);
+                            int limit = Jarray.length();
+                            Log.d("JSON","LIMIT####"+limit);
+
+                            for (int i = 0; i < limit; i++) {
+                                JSONObject object     = Jarray.getJSONObject(i);
+                                name = object.getString("name");
+                                try {
+                                    rating = object.getString("rating");
+                                }catch (JSONException e) {
+                                    Log.d(TAG,"Rating not found");
+//                                    e.printStackTrace();
+                                }
+                                vicinity = object.getString("vicinity");
+                                geometryObject= object.getJSONObject("geometry");
+                                locationObject= geometryObject.getJSONObject("location");
+                                latitude = Double.parseDouble(locationObject.getString("lat"));
+                                longitude = Double.parseDouble(locationObject.getString("lng"));
+                                resultsList.add(new ResultsObject(latitude,longitude,vicinity,rating));
+
+                                Log.d("JSON", name + " ## " + rating + "## vicinity ### "+vicinity+"### Geometry ###"+geometryObject+"LOCATION OBJECT #####"+locationObject+"Latitude#####"+latitude);
+                            }
+                            runOnUiThread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    Log.d("FINALLY","FAILED");
+                                    displayList(resultsList);
+                                }
+                            });
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+        return resultsList;
+    }
+
+    private void displayList(List<ResultsObject> resultsList) {
+
+        for (ResultsObject g: resultsList) {
+            System.out.print(g.toString() + "\n   ");
+            setMarkers1(g.getLatitude(),g.getLongitude(),g.getAddress());
+            System.out.println(g.getAddress());
+            Log.d("JSONLIST", "Address of object $$$$$$"+g.getAddress());
+            System.out.println();
+        }
+    }
+
+    private void displayList1(List<ResultsObject> resultsList) {
+
+        for (ResultsObject g: resultsList) {
+            System.out.print(g.toString() + "\n   ");
+            System.out.println(g.getAddress());
+            Log.d("JSON", "Address of object $$$$$$"+g.getAddress());
+            System.out.println();
+        }
+    }
+
+    private void onLocationSearch1(String location) {
+
+//        String location = searchTxt.getText().toString();
+//        location = searchedLocation;
+        List<android.location.Address> addressList = null;
+        Log.d("JSON","LOCATION #######"+location);
+        if (location != null || !location.equals("")) {
+            geocoder = new Geocoder(this);
             try {
-                response = client.newCall(request).execute();
-//                response.body().string();
-                jsonData = response.body().string();
-                JSONObject Jobject = new JSONObject(jsonData);
-                JSONArray Jarray = Jobject.getJSONArray("results");
-                //get the length of the json array
-                int limit = Jarray.length();
-
-                //datastore array of size limit
-                String dataStore[] = new String[limit];
-
-
-                for (int i = 0; i < limit; i++) {
-                    JSONObject object     = Jarray.getJSONObject(i);
-                    name = object.getString("name");
-                    rating = object.getString("rating");
-                    Log.d("JSON DATA", name + " ## " + rating);
-                    //store the data into the array
-                    dataStore[i] = name + " ## " + rating;
-                }
-//prove that the data was stored in the array
-                for (String content : dataStore) {
-                    Log.d("ARRAY CONTENT", content);
-                }
-
-            } catch (Exception e) {
+                addressList = geocoder.getFromLocationName(location, 1);
+            } catch (IOException e) {
                 e.printStackTrace();
             }
-*/
+            if(addressList != null && addressList.size()>0) {
+                Log.d("JSON","ADDRESS LIST####"+addressList.toString());
+                android.location.Address address = addressList.get(0);
+                String properAddress = String.format("%s, %s",
+                        address.getMaxAddressLineIndex() > 0 ? address.getAddressLine(0) : "",
+                        address.getCountryName());
+                LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
+
+                    Log.d("JSON","SET MARKERS FOR"+latLng.latitude+"####"+latLng.longitude);
+                setMarkers(latLng,properAddress);
+
+// if (mapFragment != null) {
+//                    mapFragment.setMarkers(latLng, properAddress);
+//                }
+            }
 
         }
     }
@@ -443,7 +617,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             Log.d("JSON","LIMIT####"+limit);
                             //datastore array of size limit
 //                            String dataStore[] = new String[limit];
-                            for (int i = 0; i < limit; i++) {
+                            for (int i = 0; i < 5; i++) {
                                 JSONObject object     = Jarray.getJSONObject(i);
                                 name = object.getString("name");
                                 try {
