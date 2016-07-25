@@ -9,14 +9,17 @@ import android.location.Location;
 import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Build;
+import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.Toolbar;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -44,7 +47,10 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -76,7 +82,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected Location mLastLocation;
     protected Marker mCurrLocationMarker;
     protected LocationRequest mLocationRequest;
-    protected double latitude, longitude;
+    protected double latitude, longitude,rating;
     private EditText searchTxt;
     private Button searchBtn;
     private Geocoder geocoder;
@@ -85,7 +91,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private String searchedLocation;
     private Request request;
 
-    public List<ResultsObject> resultsList = new ArrayList<ResultsObject>();
+    public ArrayList<LocationDAO> resultsList = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -93,8 +99,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
-
-        // Gets to GoogleMap from the MapView and does initialization stuff
+//        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
+//        setSupportActionBar(myToolbar);
+//        // Gets to GoogleMap from the MapView and does initialization stuff
         map = mapView.getMap();
         map.setMyLocationEnabled(true);
 
@@ -194,7 +201,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             @Override
             public boolean onQueryTextSubmit(String s) {
-                removeMarkers();
+                 removeMarkers();
                 Log.d(TAG, "onQueryTextSubmit ");
                 Log.d(TAG, s);
                 try {
@@ -283,7 +290,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     @Override
                     public void onResponse(Call call, final Response response) {
-                        String name,rating=null, vicinity;
+                        String name,vicinity;
 
                         JSONObject geometryObject, locationObject;
                         try {
@@ -297,7 +304,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 JSONObject object     = Jarray.getJSONObject(i);
                                 name = object.getString("name");
                                 try {
-                                    rating = object.getString("rating");
+                                    rating = Double.parseDouble(object.getString("rating"));
                                 }catch (JSONException e) {
                                     Log.d(TAG,"Rating not found");
 //                                    e.printStackTrace();
@@ -307,7 +314,8 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                                 locationObject= geometryObject.getJSONObject("location");
                                 latitude = Double.parseDouble(locationObject.getString("lat"));
                                 longitude = Double.parseDouble(locationObject.getString("lng"));
-                                resultsList.add(new ResultsObject(latitude,longitude,vicinity,rating));
+//                                rating = Double.parseDouble(String.valueOf((rating)));
+                                resultsList.add(new LocationDAO(name,latitude,longitude,vicinity,rating));
 
                                 Log.d("JSON", name + " ## " + rating + "## vicinity ### "+vicinity+"### Geometry ###"+geometryObject+"LOCATION OBJECT #####"+locationObject+"Latitude#####"+latitude);
                             }
@@ -325,9 +333,9 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 });
     }
 
-    private void displayList(List<ResultsObject> resultsList) {
+    private void displayList(List<LocationDAO> resultsList) {
 
-        for (ResultsObject g: resultsList) {
+        for (LocationDAO g: resultsList) {
             System.out.print(g.toString() + "\n   ");
             setMarkers(g.getLatitude(),g.getLongitude(),g.getAddress());
             System.out.println(g.getAddress());
@@ -338,6 +346,20 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     }
 
+    public void sortRatings() {
+
+        Collections.sort(resultsList, new Comparator<LocationDAO>() {
+                    public int compare(LocationDAO object1, LocationDAO object2) {
+                        return Double.compare(object2.rating, object1.rating);
+                    }
+                }
+        );
+
+        for (LocationDAO l:resultsList) {
+            double r = l.getRating();
+            Log.d("DEBUG","Sorted LIST###"+l.getRating());
+        }
+    }
     private void removeMarkers() {
         resultsList.clear();
         map.clear();
@@ -346,6 +368,23 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onMapReady(GoogleMap googleMap) {
 
     }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.next:
+                sortRatings();
+                Intent i = new Intent(MainActivity.this, Main2Activity.class);
+                i.putParcelableArrayListExtra("MyObj",resultsList);
+                startActivity(i);
+            return true;
+            default:
+                // If we got here, the user's action was not recognized.
+                // Invoke the superclass to handle it.
+                return super.onOptionsItemSelected(item);
+        }
+    }
+
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
     public boolean checkLocationPermission(){
         if (ContextCompat.checkSelfPermission(this,
