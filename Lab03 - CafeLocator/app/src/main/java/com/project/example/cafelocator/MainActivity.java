@@ -14,7 +14,10 @@ import android.os.Parcelable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.app.ActionBarActivity;
+import android.support.v4.view.GravityCompat;
+import android.support.v4.widget.DrawerLayout;
+
+import android.support.v7.app.ActionBarDrawerToggle;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -23,8 +26,13 @@ import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ExpandableListView;
+import android.widget.FrameLayout;
+import android.widget.ListView;
 import android.widget.SearchView;
 import android.widget.Toast;
 
@@ -94,8 +102,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private static final String TAG = "MainActivity";
     private String searchedLocation;
     private Request request;
-
+    private DrawerLayout mDrawerLayout;
+    private ListView mDrawerList;
+//    private android.support.v4.app.ActionBarDrawerToggle mDrawerToggle;
+    private ActionBarDrawerToggle mDrawerToggle;
+    private CharSequence mDrawerTitle;
+    private CharSequence mTitle;
+    private String[] mPlanetTitles;
     public ArrayList<LocationDAO> resultsList = new ArrayList<>();
+    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,9 +118,55 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         setContentView(R.layout.activity_main);
         mapView = (MapView) findViewById(R.id.mapview);
         mapView.onCreate(savedInstanceState);
-//        Toolbar myToolbar = (Toolbar) findViewById(R.id.my_toolbar);
-//        setSupportActionBar(myToolbar);
-//        // Gets to GoogleMap from the MapView and does initialization stuff
+        _initMenu();
+        _initMap();
+        handleIntent(getIntent());
+        buildGoogleApiClient();
+    }
+
+    private void _initMenu() {
+        mTitle = mDrawerTitle = getTitle();
+        mPlanetTitles = getResources().getStringArray(R.array.planets_array);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        mDrawerList = (ListView) findViewById(R.id.left_drawer);
+
+        // set a custom shadow that overlays the main content when the drawer opens
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+        // set up the drawer's list view with items and click listener
+        mDrawerList.setAdapter(new ArrayAdapter<String>(this,
+                R.layout.drawer_list_item, mPlanetTitles));
+        mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+
+        // enable ActionBar app icon to behave as action to toggle nav drawer
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
+
+        // ActionBarDrawerToggle ties together the the proper interactions
+        // between the sliding drawer and the action bar app icon
+        mDrawerToggle = new ActionBarDrawerToggle(
+                this,                  /* host Activity */
+                mDrawerLayout,         /* DrawerLayout object */
+//                R.drawable.ic_drawer,  /* nav drawer image to replace 'Up' caret */
+                R.string.drawer_open,  /* "open drawer" description for accessibility */
+                R.string.drawer_close  /* "close drawer" description for accessibility */
+        ) {
+            public void onDrawerClosed(View view) {
+                getSupportActionBar().setTitle(mTitle);
+                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+
+            public void onDrawerOpened(View drawerView) {
+                getSupportActionBar().setTitle(mDrawerTitle);
+                mDrawerList.bringToFront();
+                mDrawerLayout.requestLayout();
+//                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
+            }
+        };
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
+
+    }
+
+    private void _initMap() {
         map = mapView.getMap();
         map.setMyLocationEnabled(true);
 
@@ -122,9 +183,25 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
         }
-        handleIntent(getIntent());
-        buildGoogleApiClient();
+
     }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+        // Sync the toggle state after onRestoreInstanceState has occurred.
+        mDrawerToggle.syncState();
+    }
+/* Called whenever we call invalidateOptionsMenu() */
+    @Override
+    public boolean onPrepareOptionsMenu(Menu menu) {
+        // If the nav drawer is open, hide action items related to the content view
+        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
+        menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
+        return super.onPrepareOptionsMenu(menu);
+    }
+
+
 
     private void getLocation(String searchedLocation) {
 
@@ -206,19 +283,14 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
             SearchManager manager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
 
-            searchView= (android.support.v7.widget.SearchView) menu.findItem(R.id.search).getActionView();
+            searchView= (android.support.v7.widget.SearchView) menu.findItem(R.id.action_websearch).getActionView();
 
             searchView.setSearchableInfo(manager.getSearchableInfo(getComponentName()));
 
             searchView.setOnQueryTextListener(new android.support.v7.widget.SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextSubmit(String s) {
-                    boolean flag = StringUtils.isBlank(s);
-                    Log.d("DEBUG","Value of flag OUTSIDE"+flag);
-                    if(StringUtils.isBlank(s)) {
-                        Log.d("DEBUG","Value of flag INSIDE"+flag);
-                        Toast.makeText(MainActivity.this, "Please enter a location", Toast.LENGTH_LONG).show();
-                    }
+                    Log.d("DEBUG","Inside OnQueryTextSubmit");
                     removeMarkers();
                     try {
                         getLocation(s);
@@ -387,18 +459,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.next:
-                sortRatings();
-                Intent i = new Intent(MainActivity.this, Main2Activity.class);
-                i.putParcelableArrayListExtra("MyObj",resultsList);
-                startActivity(i);
+        if (mDrawerToggle.onOptionsItemSelected(item)) {
             return true;
-            default:
-                // If we got here, the user's action was not recognized.
-                // Invoke the superclass to handle it.
-                return super.onOptionsItemSelected(item);
         }
+        return super.onOptionsItemSelected(item);
     }
 
     public static final int MY_PERMISSIONS_REQUEST_LOCATION = 99;
@@ -492,4 +556,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             handleIntent(intent);
     }
 
+        /* The click listner for ListView in the navigation drawer */
+        private class DrawerItemClickListener implements ListView.OnItemClickListener {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                selectItem(position);
+            }
+        }
+
+    private void selectItem(int position) {
+        if (position == 0) {
+            if(globalMarkers.size() == 0) {
+                Log.d("DEBUG","Size of markers"+globalMarkers.size());
+                Toast.makeText(MainActivity.this, "Please search a cafe first", Toast.LENGTH_LONG).show();
+            } else {
+                globalMarkers.clear();
+                Log.d("DEBUG","Size of Markers after clear"+globalMarkers.size());
+                sortRatings();
+                Intent i = new Intent(MainActivity.this, Main2Activity.class);
+                i.putParcelableArrayListExtra("MyObj",resultsList);
+                startActivity(i);
+                removeMarkers();
+          }
+        }
+        Log.d("DEBUG","Selected position"+position);
+        // Highlight the selected item, update the title, and close the drawer
+        mDrawerList.setItemChecked(position, true);
+//        setTitle(mPlanetTitles[position]);
+        mDrawerLayout.closeDrawer(mDrawerList);
+    }
+    @Override
+    public void setTitle(CharSequence title) {
+        mTitle = title;
+        getSupportActionBar().setTitle(mTitle);
+    }
 }

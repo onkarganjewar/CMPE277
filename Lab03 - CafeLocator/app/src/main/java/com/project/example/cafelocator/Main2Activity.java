@@ -1,6 +1,7 @@
 package com.project.example.cafelocator;
 
 import android.content.Intent;
+import android.support.v4.app.NavUtils;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -26,14 +27,15 @@ public class Main2Activity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main2);
-
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        getSupportActionBar().setHomeButtonEnabled(true);
         recyclerView = (RecyclerView) findViewById(R.id.recycler_view);
         Intent i = getIntent();
         locationList =  i.getParcelableArrayListExtra("MyObj");
 
         for (LocationDAO l: locationList) {
             Double rating = l.getRating();
-            Log.d("DEBUG","RECEIVED LIST"+rating);
+//            Log.d("DEBUG","RECEIVED LIST"+rating);
         }
         mAdapter = new LocationAdapter(locationList);
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getApplicationContext());
@@ -46,9 +48,13 @@ public class Main2Activity extends AppCompatActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.next:
-                // User chose the "Settings" item, show the app settings UI...
-                System.exit(0);
+//            case R.id.next:
+//                // User chose the "Settings" item, show the app settings UI...
+//                System.exit(0);
+//                return true;
+            // Respond to the action bar's Up/Home button
+            case android.R.id.home:
+                NavUtils.navigateUpFromSameTask(this);
                 return true;
             default:
                 // If we got here, the user's action was not recognized.
