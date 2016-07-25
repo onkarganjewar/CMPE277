@@ -27,7 +27,8 @@
             android:name="com.google.android.maps.v2.API_KEY"
             android:value="AIzaSyAiZgmlHcn9ZW6id06TqcAQByNKf2lK6ew" />
 
-        <activity android:name=".MainActivity">
+        <activity android:name=".MainActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <action android:name="android.intent.action.SEARCH" />

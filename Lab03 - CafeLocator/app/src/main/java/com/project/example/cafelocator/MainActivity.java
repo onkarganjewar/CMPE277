@@ -24,6 +24,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.SearchView;
+import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.api.GoogleApiClient;
@@ -42,6 +43,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import org.apache.commons.lang3.StringUtils;
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -71,7 +73,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         LocationListener {
 
     private static List<Marker> globalMarkers = new ArrayList<>();
-
+    private android.support.v7.widget.SearchView searchView;
     public MapView mapView;
 
     public GoogleMap map;
@@ -118,7 +120,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
         }
-
+        handleIntent(getIntent());
         buildGoogleApiClient();
     }
 
@@ -196,31 +198,43 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
-        android.support.v7.widget.SearchView searchView = (android.support.v7.widget.SearchView) menu.findItem(R.id.search).getActionView();
-        searchView.setOnQueryTextListener(new android.support.v7.widget.SearchView.OnQueryTextListener() {
 
-            @Override
-            public boolean onQueryTextSubmit(String s) {
-                 removeMarkers();
-                Log.d(TAG, "onQueryTextSubmit ");
-                Log.d(TAG, s);
-                try {
 
-                    getLocation(s);
-                    queryAPI(s);
-                } catch (IOException e) {
-                    e.printStackTrace();
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
+
+            SearchManager manager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
+
+            searchView= (android.support.v7.widget.SearchView) menu.findItem(R.id.search).getActionView();
+
+            searchView.setSearchableInfo(manager.getSearchableInfo(getComponentName()));
+
+            searchView.setOnQueryTextListener(new android.support.v7.widget.SearchView.OnQueryTextListener() {
+                @Override
+                public boolean onQueryTextSubmit(String s) {
+                    boolean flag = StringUtils.isBlank(s);
+                    Log.d("DEBUG","Value of flag OUTSIDE"+flag);
+                    if(StringUtils.isBlank(s)) {
+                        Log.d("DEBUG","Value of flag INSIDE"+flag);
+                        Toast.makeText(MainActivity.this, "Please enter a location", Toast.LENGTH_LONG).show();
+                    }
+                    removeMarkers();
+                    try {
+                        getLocation(s);
+                        queryAPI(s);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    return false;
                 }
-                return false;
-            }
 
-            @Override
-            public boolean onQueryTextChange(String s) {
-                Log.d(TAG, "onQueryTextChange ");
-                return false;
-            }
-        });
-
+                @Override
+                public boolean onQueryTextChange(String s) {
+                    return false;
+                }
+            });
+            searchView.setSubmitButtonEnabled(true);
+            searchView.setIconified(true);
+        }
         return true;
     }
     @Override
@@ -462,6 +476,18 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     public void onLowMemory() {
         super.onLowMemory();
         mapView.onLowMemory();
+    }
+    private void handleIntent(Intent intent) {
+        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+                    String query = intent.getStringExtra(SearchManager.QUERY);
+                    //use the query to search your data somehow
+        //            doMyIntent();
+                    Log.d("DEBUG","My query $$$$$$$$ query"+query);
+            }
+        }
+       @Override
+        protected void onNewIntent(Intent intent) {
+            handleIntent(intent);
     }
 
 }
