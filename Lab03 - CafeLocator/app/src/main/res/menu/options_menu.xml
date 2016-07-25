@@ -7,7 +7,7 @@
           app:showAsAction="collapseActionView|ifRoom"
         app:actionViewClass="android.support.v7.widget.SearchView" />
     <item android:id="@+id/next"
-        android:title="nextBtn"
+        android:title="View Ratings"
         android:icon="@drawable/ic_action_next"
         app:showAsAction="collapseActionView|ifRoom"
         app:actionViewClass="android.support.v7.widget.SearchView" />
