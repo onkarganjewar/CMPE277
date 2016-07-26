@@ -1,6 +1,7 @@
 package com.project.example.cafelocator;
 
 import android.app.Activity;
+import android.app.Dialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -8,6 +9,8 @@ import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
 
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
 
 import android.support.design.widget.NavigationView;
@@ -27,6 +30,7 @@ import android.view.View;
 import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
+import com.google.android.gms.common.GooglePlayServicesUtil;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.location.LocationListener;
 import com.google.android.gms.location.LocationRequest;
@@ -46,7 +50,6 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -54,7 +57,6 @@ import java.util.List;
 
 import okhttp3.Call;
 import okhttp3.Callback;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -88,53 +90,110 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        mapView = (MapView) findViewById(R.id.mapview);
-        mapView.onCreate(savedInstanceState);
-        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
-        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-            @Override
-            public boolean onNavigationItemSelected(MenuItem menuItem) {
-                menuItem.setChecked(true);
-                switch (menuItem.getItemId()) {
-                    case R.id.navigation_item_images:
-
-                        Log.d("DEBUG","Ratings clicked");
-                        if(globalMarkers.size() == 0) {
-                            Log.d("DEBUG","Size of markers"+globalMarkers.size());
-                            Snackbar.make(findViewById(R.id.drawer_layout), "Please search a cafe first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
-                                @Override
-                                public void onClick(View v) {}
-                            }).show();
-                        } else {
-                            globalMarkers.clear();
-                            Log.d("DEBUG","Size of Markers after clear"+globalMarkers.size());
-                            sortRatings();
-                            Intent i = new Intent(MainActivity.this, Main2Activity.class);
-                            i.putParcelableArrayListExtra("MyObj",resultsList);
-                            startActivity(i);
-                            removeMarkers();
-                        }
-                        break;
-                    case R.id.navigation_item_location:
-                        Toast.makeText(MainActivity.this, "My Location clicked", Toast.LENGTH_SHORT).show();
-                        Log.d("DEBUG","Next clicked");
-                        break;
-                    default:
-                        Toast.makeText(MainActivity.this, "In default case", Toast.LENGTH_SHORT).show();
+        if (isNetworkAvailable(this.getBaseContext())) {
+            setContentView(R.layout.activity_main);
+            mapView = (MapView) findViewById(R.id.mapview);
+            mapView.onCreate(savedInstanceState);
+            _initMap();
+            Snackbar.make(findViewById(R.id.drawer_layout), "Please check the NETWORK", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
                 }
-                mDrawerLayout.closeDrawers();
-                return true;
-            }
-        });
-        _initMap();
-        handleIntent(getIntent());
-        buildGoogleApiClient();
+            }).show();
+            Log.d("JSON","NETWORK");
+
+        }else if (servicesOK()) {
+//            Toast.makeText(this, "Ready to map!", Toast.LENGTH_LONG).show();
+//            setContentView(R.layout.testmap);
+
+            setContentView(R.layout.activity_main);
+            mapView = (MapView) findViewById(R.id.mapview);
+            mapView.onCreate(savedInstanceState);
+            _initMap();
+            Snackbar.make(findViewById(R.id.drawer_layout), "Please check the internet connection first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
+                }
+            }).show();
+            Log.d("JSON","OKAY");
+
+
+        } else {
+            Log.d("JSON","NOT OKAY");
+            setContentView(R.layout.activity_main);
+            mapView = (MapView) findViewById(R.id.mapview);
+            mapView.onCreate(savedInstanceState);
+            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
+            mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+            mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+            NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
+            navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+                @Override
+                public boolean onNavigationItemSelected(MenuItem menuItem) {
+                    menuItem.setChecked(true);
+                    switch (menuItem.getItemId()) {
+                        case R.id.navigation_item_images:
+
+                            Log.d("DEBUG", "Ratings clicked");
+                            if (globalMarkers.size() == 0) {
+                                Log.d("DEBUG", "Size of markers" + globalMarkers.size());
+                                Snackbar.make(findViewById(R.id.drawer_layout), "Please search a cafe first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
+                                    @Override
+                                    public void onClick(View v) {
+                                    }
+                                }).show();
+                            } else {
+                                globalMarkers.clear();
+                                Log.d("DEBUG", "Size of Markers after clear" + globalMarkers.size());
+                                sortRatings();
+                                Intent i = new Intent(MainActivity.this, Main2Activity.class);
+                                i.putParcelableArrayListExtra("MyObj", resultsList);
+                                startActivity(i);
+                                removeMarkers();
+                            }
+                            break;
+                        case R.id.navigation_item_location:
+                            Toast.makeText(MainActivity.this, "My Location clicked", Toast.LENGTH_SHORT).show();
+                            Log.d("DEBUG", "Next clicked");
+                            break;
+                        default:
+                            Toast.makeText(MainActivity.this, "In default case", Toast.LENGTH_SHORT).show();
+                    }
+                    mDrawerLayout.closeDrawers();
+                    return true;
+                }
+            });
+            _initMap();
+            handleIntent(getIntent());
+            buildGoogleApiClient();
+        }
+    }
+
+        public boolean isNetworkAvailable(Context context)
+        {
+            ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
+            return activeNetworkInfo != null;
+        }
+
+    private boolean servicesOK() {
+
+        int isAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
+
+        if (isAvailable == ConnectionResult.SUCCESS) {
+            return true;
+        } else if (GooglePlayServicesUtil.isUserRecoverableError(isAvailable)) {
+                Log.d("JSON","IN ELSE IF");
+//            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(isAvailable,
+//                    this, GPS_ERRORDIALOG_REQUEST);
+//            dialog.show();
+
+        } else {
+            Toast.makeText(this, "Can not connect!", Toast.LENGTH_SHORT).show();
+        }
+        return false;
     }
 
     private void _initMap() {
