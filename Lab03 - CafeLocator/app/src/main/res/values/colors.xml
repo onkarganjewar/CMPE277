@@ -4,15 +4,20 @@
     <color name="colorPrimary">#125688</color>
     <color name="colorPrimaryDark">#125688</color>
     <color name="textColorPrimary">#FFFFFF</color>
-    <color name="windowBackground">#FFFFFF</color>
-    <color name="navigationBarColor">#000000</color>
+    <color name="windowBackground">#999999</color>
+    <color name="statusBarColor">#000000</color>
     <color name="colorAccent">#c8e8ff</color>
-    <color name="year">#999999</color>
-    <color name="title">#222222</color>
+
+    <color name="ratings">#0288D1</color>
+<color name="address">#0288D1</color>
+<color name="name">#00BCD4</color>
 </resources>
+<!--
 
-
-
-<!--<color name="colorPrimary">#3F51B5</color>-->
-<!--<color name="colorPrimaryDark">#303F9F</color>-->
-<!--<color name="colorAccent">#FF4081</color>-->
+<color name="colorPrimary">#03A9F4</color>
+<color name="colorPrimaryDark">#0288D1</color>
+<color name="colorAccent">#00BCD4</color>
+<color name="windowBackground">#fff</color>
+<color name="navigationBarColor">#0288D1</color>
+<color name="statusBarColor">#0288D1</color>
+<color name="textColorPrimary">#fff4f4f4</color>-->

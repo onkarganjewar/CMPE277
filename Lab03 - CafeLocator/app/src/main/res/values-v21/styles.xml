@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="colorPrimary">#03A9F4</color>
-    <color name="colorPrimaryDark">#0288D1</color>
-    <color name="colorAccent">#00BCD4</color>
-    <color name="windowBackground">#fff</color>
-    <color name="navigationBarColor">#0288D1</color>
-    <color name="statusBarColor">#0288D1</color>
-    <color name="textColorPrimary">#fff4f4f4</color>
+    <style name="AppTheme" parent="AppTheme.Base">
+        <item name="android:windowContentTransitions">true</item>
+            <item name="android:windowAllowEnterTransitionOverlap">true</item>
+            <item name="android:windowAllowReturnTransitionOverlap">true</item>
+            <item name="android:windowSharedElementEnterTransition">@android:transition/move</item>
+            <item name="android:windowSharedElementExitTransition">@android:transition/move</item>
+    </style>
 </resources>

@@ -24,6 +24,7 @@ import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
@@ -510,6 +511,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         switch (id) {
             // Hamburger icon to toggle NavigationDrawer
             case android.R.id.home:
+                if(mDrawerLayout.isDrawerOpen(GravityCompat.START)) {
+                    //drawer is open
+                    mDrawerLayout.closeDrawer(Gravity.LEFT); //CLOSE Nav Drawer!
+                } else
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
              }

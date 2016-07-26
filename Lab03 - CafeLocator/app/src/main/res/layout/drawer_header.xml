@@ -3,15 +3,24 @@
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="150dp"
-    android:background="?attr/colorPrimaryDark"
+    android:background="@color/colorPrimary"
     android:padding="16dp"
     android:theme="@style/ThemeOverlay.AppCompat.Dark"
     android:gravity="bottom">
 
+    <ImageView
+        android:id="@+id/drawer_profile_image"
+        android:layout_width="@dimen/activity_horizontal_margin"
+        android:layout_height="@dimen/activity_vertical_margin"
+        android:scaleType="centerCrop"
+        android:src="@drawable/bg_image"
+        />
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:background="@color/statusBarColor"
         android:text="@string/drawer_header_text"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"/>
 
 </LinearLayout>
+    <!--android:layout_marginBottom="@dimen/standard_margin"-->
