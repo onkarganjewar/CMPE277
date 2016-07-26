@@ -5,6 +5,7 @@
         android:icon="@drawable/ic_action_search"
         android:title="@string/action_websearch"
         app:showAsAction="collapseActionView|ifRoom"
+        app:itemIconTint="#2196f3"
         app:actionViewClass="android.support.v7.widget.SearchView"/>
 </menu>
     <!--app:showAsAction="withText|ifRoom"-->
