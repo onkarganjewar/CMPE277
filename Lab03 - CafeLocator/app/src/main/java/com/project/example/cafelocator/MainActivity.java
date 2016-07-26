@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.os.Build;
 import android.os.Parcelable;
 import android.support.design.widget.NavigationView;
+import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v4.content.ContextCompat;
@@ -131,11 +132,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 menuItem.setChecked(true);
                 switch (menuItem.getItemId()) {
                     case R.id.navigation_item_images:
-                        Toast.makeText(MainActivity.this, "View Ratings", Toast.LENGTH_SHORT).show();
+
                         Log.d("DEBUG","Ratings clicked");
                         if(globalMarkers.size() == 0) {
                             Log.d("DEBUG","Size of markers"+globalMarkers.size());
-                            Toast.makeText(MainActivity.this, "Please search a cafe first", Toast.LENGTH_LONG).show();
+                            Snackbar.make(findViewById(R.id.drawer_layout), "Please search a cafe first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {
+                                    // Snackbar action goes here
+
+                                }
+                            }).show();
                         } else {
                             globalMarkers.clear();
                             Log.d("DEBUG","Size of Markers after clear"+globalMarkers.size());
