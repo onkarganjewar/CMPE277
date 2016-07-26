@@ -13,6 +13,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
 
+import android.provider.Settings;
 import android.support.design.widget.NavigationView;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
@@ -133,20 +134,24 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 if(isGPSEnabled(this.getBaseContext())) {
                     navigationViewListeners();
                 } else {
-                    Snackbar.make(findViewById(R.id.drawer_layout), "GPS is not enabled", Snackbar.LENGTH_LONG).setAction("TURN ON", new View.OnClickListener() {
+                    Snackbar.make(findViewById(R.id.drawer_layout), "GPS is not enabled", Snackbar.LENGTH_INDEFINITE).setAction("TURN ON", new View.OnClickListener() {
                         @Override
                         public void onClick(View v) {
                             Intent callGPSSettingIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
                             startActivityForResult(callGPSSettingIntent,0);
+                            navigationViewListeners();
                         }
                     }).show();
                 }
 
             } else {
-                Snackbar.make(findViewById(R.id.drawer_layout), "Not able to connect to the Internet", Snackbar.LENGTH_LONG).setAction("Exit and Try Again", new View.OnClickListener() {
+                Snackbar.make(findViewById(R.id.drawer_layout), "Not able to connect to the Internet", Snackbar.LENGTH_INDEFINITE).setAction("SETTINGS", new View.OnClickListener() {
                     @Override
                     public void onClick(View v) {
-                        System.exit(1);
+                        Intent intent = new Intent(Settings.ACTION_SETTINGS);
+                        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                        navigationViewListeners();
                     }
                 }).show();
             }
