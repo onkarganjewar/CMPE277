@@ -97,22 +97,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     protected Marker mCurrLocationMarker;
     protected LocationRequest mLocationRequest;
     protected double latitude, longitude,rating;
-    private EditText searchTxt;
-    private Button searchBtn;
     private Geocoder geocoder;
 
     private static final String TAG = "MainActivity";
-    private String searchedLocation;
     private Request request;
     private DrawerLayout mDrawerLayout;
-    private ListView mDrawerList;
-//    private android.support.v4.app.ActionBarDrawerToggle mDrawerToggle;
-    private ActionBarDrawerToggle mDrawerToggle;
-    private CharSequence mDrawerTitle;
-    private CharSequence mTitle;
-    private String[] mPlanetTitles;
+
     public ArrayList<LocationDAO> resultsList = new ArrayList<>();
-    private Toolbar toolbar;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,10 +129,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             Log.d("DEBUG","Size of markers"+globalMarkers.size());
                             Snackbar.make(findViewById(R.id.drawer_layout), "Please search a cafe first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
                                 @Override
-                                public void onClick(View v) {
-                                    // Snackbar action goes here
-
-                                }
+                                public void onClick(View v) {}
                             }).show();
                         } else {
                             globalMarkers.clear();
@@ -164,58 +152,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 return true;
             }
         });
-
-//        _initMenu();
         _initMap();
         handleIntent(getIntent());
         buildGoogleApiClient();
     }
 
-    /*private void _initMenu() {
-        mTitle = mDrawerTitle = getTitle();
-        mPlanetTitles = getResources().getStringArray(R.array.planets_array);
-        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-        mDrawerList = (ListView) findViewById(R.id.left_drawer);
-
-        // set a custom shadow that overlays the main content when the drawer opens
-        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-        // set up the drawer's list view with items and click listener
-        mDrawerList.setAdapter(new ArrayAdapter<String>(this,
-                R.layout.drawer_list_item, mPlanetTitles));
-        mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
-
-        // enable ActionBar app icon to behave as action to toggle nav drawer
-        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        getSupportActionBar().setHomeButtonEnabled(true);
-
-        // ActionBarDrawerToggle ties together the the proper interactions
-        // between the sliding drawer and the action bar app icon
-        mDrawerToggle = new ActionBarDrawerToggle(
-                this,                  *//* host Activity *//*
-                mDrawerLayout,         *//* DrawerLayout object *//*
-//                R.drawable.ic_drawer,  *//* nav drawer image to replace 'Up' caret *//*
-                R.string.drawer_open,  *//* "open drawer" description for accessibility *//*
-                R.string.drawer_close  *//* "close drawer" description for accessibility *//*
-        ) {
-            public void onDrawerClosed(View view) {
-                getSupportActionBar().setTitle(mTitle);
-                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
-            }
-
-            public void onDrawerOpened(View drawerView) {
-                getSupportActionBar().setTitle(mDrawerTitle);
-                mDrawerList.bringToFront();
-                mDrawerLayout.requestLayout();
-//                invalidateOptionsMenu(); // creates call to onPrepareOptionsMenu()
-            }
-        };
-        mDrawerLayout.addDrawerListener(mDrawerToggle);
-
-    }
-*/
     private void _initMap() {
         map = mapView.getMap();
         map.setMyLocationEnabled(true);
+        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
         try {
@@ -223,32 +168,12 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (Exception e) {
             e.printStackTrace();
         }
-        // Updates the location and zoom of the MapView
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(43.1, -87.9), 14);
-        map.animateCamera(cameraUpdate);
 
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
         }
 
     }
-/*
-    @Override
-    protected void onPostCreate(Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-        // Sync the toggle state after onRestoreInstanceState has occurred.
-        mDrawerToggle.syncState();
-    }*/
-/* Called whenever we call invalidateOptionsMenu() */
-   /* @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        // If the nav drawer is open, hide action items related to the content view
-        boolean drawerOpen = mDrawerLayout.isDrawerOpen(mDrawerList);
-//        menu.findItem(R.id.action_websearch).setVisible(!drawerOpen);
-        return super.onPrepareOptionsMenu(menu);
-    }
-*/
-
 
     private void getLocation(String searchedLocation) {
 
@@ -299,6 +224,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             Log.d("CREATION",String.valueOf(mLastLocation.getLatitude()));
             Log.d("CREATION",String.valueOf(mLastLocation.getLongitude()));
         }
+        // Updates the location and zoom of the MapView
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 18);
+        map.animateCamera(cameraUpdate);
+
     }
 
     @Override
@@ -363,20 +292,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         Log.d("CREATION", "Connection failed due to gps");
     }
 
-    /*
-     * Sample query
-     * https://maps.googleapis.com/maps/api/place/nearbysearch/json?
-     * location=37.3525714,-121.893204&radius=500&types=cafe&key=AIzaSyCk6xfq4jFcg6Qlz5Nlhn2iUug8pndfIP8
-     */
     public StringBuilder getQueryString (double latitude, double longitude) {
 
         //use your current location here
         double mLatitude = latitude;
         double mLongitude = longitude;
-        /*
-        double mLatitude = 37.77657;
-        double mLongitude = -122.417506;*/
-
         StringBuilder sb = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
         sb.append("location=" + mLatitude + "," + mLongitude);
         sb.append("&radius=500");
@@ -500,15 +420,11 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         map.clear();
     }
     @Override
-    public void onMapReady(GoogleMap googleMap) {
-
-    }
+    public void onMapReady(GoogleMap googleMap) {  }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-//        if (mDrawerToggle.onOptionsItemSelected(item)) {
-//            return true;
-//        }
+
         int id = item.getItemId();
 
         switch (id) {
@@ -600,8 +516,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
                     String query = intent.getStringExtra(SearchManager.QUERY);
-                    //use the query to search your data somehow
-        //            doMyIntent();
                     Log.d("DEBUG","My query $$$$$$$$ query"+query);
             }
         }
@@ -610,38 +524,4 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             handleIntent(intent);
     }
 
-        /* The click listner for ListView in the navigation drawer */
-        private class DrawerItemClickListener implements ListView.OnItemClickListener {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                selectItem(position);
-            }
-        }
-
-    private void selectItem(int position) {
-        if (position == 0) {
-            if(globalMarkers.size() == 0) {
-                Log.d("DEBUG","Size of markers"+globalMarkers.size());
-                Toast.makeText(MainActivity.this, "Please search a cafe first", Toast.LENGTH_LONG).show();
-            } else {
-                globalMarkers.clear();
-                Log.d("DEBUG","Size of Markers after clear"+globalMarkers.size());
-                sortRatings();
-                Intent i = new Intent(MainActivity.this, Main2Activity.class);
-                i.putParcelableArrayListExtra("MyObj",resultsList);
-                startActivity(i);
-                removeMarkers();
-          }
-        }
-        Log.d("DEBUG","Selected position"+position);
-        // Highlight the selected item, update the title, and close the drawer
-        mDrawerList.setItemChecked(position, true);
-//        setTitle(mPlanetTitles[position]);
-        mDrawerLayout.closeDrawer(mDrawerList);
-    }
-    @Override
-    public void setTitle(CharSequence title) {
-        mTitle = title;
-        getSupportActionBar().setTitle(mTitle);
-    }
 }

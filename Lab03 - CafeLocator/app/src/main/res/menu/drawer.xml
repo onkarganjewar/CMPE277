@@ -11,15 +11,18 @@
             android:title="@string/nav_item_location" />
     </group>
 
-    <item android:title="@string/nav_sub_menu">
-        <menu>
-            <item
-                android:icon="@drawable/ic_action_search"
-                android:title="@string/nav_sub_menu_item01" />
-            <item
-                android:icon="@drawable/ic_action_search"
-                android:title="@string/nav_sub_menu_item02" />
-        </menu>
-    </item>
 
 </menu>
+<!--
+
+<item android:title="@string/nav_sub_menu">
+<menu>
+    <item
+        android:icon="@drawable/ic_action_search"
+        android:title="@string/nav_sub_menu_item01" />
+    <item
+        android:icon="@drawable/ic_action_search"
+        android:title="@string/nav_sub_menu_item02" />
+</menu>
+</item>
+-->

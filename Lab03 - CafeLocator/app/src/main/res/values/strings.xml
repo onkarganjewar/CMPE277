@@ -24,5 +24,11 @@
     <string name="action_websearch">Web search</string>
     <string name="app_not_available">Sorry, there\'s no web browser available</string>
 
+    <color name="primary">#FFFF00</color>
+    <color name="primary_dark">#502020</color>
+    <color name="text_primary">#FF00ff00</color>
+    <color name="text_secondary">#FFff0000</color>
+    <color name="window_background">#000000</color>
+    <color name="nav_color">#505050</color>
     <!--<item name="action_websearch" type="id">Web search</item>-->
 </resources>
