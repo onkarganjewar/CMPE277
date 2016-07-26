@@ -1,6 +1,5 @@
 package com.project.example.cafelocator;
 
-import android.app.Activity;
 import android.app.Dialog;
 import android.app.SearchManager;
 import android.content.Context;
@@ -9,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.location.Geocoder;
 import android.location.Location;
 
+import android.location.LocationManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.os.Build;
@@ -66,140 +66,189 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         GoogleApiClient.OnConnectionFailedListener,
         LocationListener {
 
-    private static List<Marker> globalMarkers = new ArrayList<>();
-    private android.support.v7.widget.SearchView searchView;
-    public MapView mapView;
-
+    // Google Map variables
     public GoogleMap map;
-
-    private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
-    private long FASTEST_INTERVAL = 2000; /* 2 sec */
+    public MapView mapView;
     protected GoogleApiClient mGoogleApiClient;
-    protected Location mLastLocation;
-    protected Marker mCurrLocationMarker;
-    protected LocationRequest mLocationRequest;
-    protected double latitude, longitude,rating;
     private Geocoder geocoder;
+    private CameraUpdate cameraUpdate;
 
-    private static final String TAG = "MainActivity";
+    // Store current location only once
+    private double _latitude, _longitude;
+
+
+    // Variables to get current location
+    protected Location mLastLocation;
+    protected LocationRequest mLocationRequest;
+    protected Marker mCurrLocationMarker;
+
+    // Store information of searched cafe
+    private String cafeName, cafeAddress;
+    private double rating, latitude, longitude;
+
+    // Location update intervals
+    private long FASTEST_INTERVAL = 2000; /* 2 sec */
+    private long UPDATE_INTERVAL = 10 * 1000;  /* 10 secs */
+    private LocationManager locationManager;
+
+    // List to store all the markers present on the map
+    private static List<Marker> globalMarkers = new ArrayList<>();
+
+    // Searchview to search the current location
+    private android.support.v7.widget.SearchView searchView;
+
+    // Tag to use for debug
+    private static final String TAG = "MAIN_ACTIVITY";
+
+    // okhttp3 library elements --> to make a REST call
     private Request request;
+    // NavigationDrawer elements
     private DrawerLayout mDrawerLayout;
 
+    private NavigationView navigationView;
+
+    // List to store retrieved Cafe objects
     public ArrayList<LocationDAO> resultsList = new ArrayList<>();
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        if (isNetworkAvailable(this.getBaseContext())) {
-            setContentView(R.layout.activity_main);
-            mapView = (MapView) findViewById(R.id.mapview);
-            mapView.onCreate(savedInstanceState);
-            _initMap();
-            Snackbar.make(findViewById(R.id.drawer_layout), "Please check the NETWORK", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
+        setContentView(R.layout.activity_main);
+
+        // Initialize all the elements and layouts
+        _init(savedInstanceState);
+
+        // Initialize MapView
+        _initMap();
+
+        // Check if the google play services are present
+        if (servicesPresent()) {
+
+            // Check for internet connectivity
+            if (isNetworkAvailable(this.getBaseContext())) {
+
+                // Check if GPS sensor is enabled
+                if(isGPSEnabled(this.getBaseContext())) {
+                    navigationViewListeners();
+                } else {
+                    Snackbar.make(findViewById(R.id.drawer_layout), "GPS is not enabled", Snackbar.LENGTH_LONG).setAction("TURN ON", new View.OnClickListener() {
+                        @Override
+                        public void onClick(View v) {
+                            Intent callGPSSettingIntent = new Intent(android.provider.Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            startActivityForResult(callGPSSettingIntent,0);
+                        }
+                    }).show();
                 }
-            }).show();
-            Log.d("JSON","NETWORK");
 
-        }else if (servicesOK()) {
-//            Toast.makeText(this, "Ready to map!", Toast.LENGTH_LONG).show();
-//            setContentView(R.layout.testmap);
-
-            setContentView(R.layout.activity_main);
-            mapView = (MapView) findViewById(R.id.mapview);
-            mapView.onCreate(savedInstanceState);
-            _initMap();
-            Snackbar.make(findViewById(R.id.drawer_layout), "Please check the internet connection first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                }
-            }).show();
-            Log.d("JSON","OKAY");
-
-
-        } else {
-            Log.d("JSON","NOT OKAY");
-            setContentView(R.layout.activity_main);
-            mapView = (MapView) findViewById(R.id.mapview);
-            mapView.onCreate(savedInstanceState);
-            getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-
-            mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
-            mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
-            NavigationView navigationView = (NavigationView) findViewById(R.id.navigation_view);
-            navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
-                @Override
-                public boolean onNavigationItemSelected(MenuItem menuItem) {
-                    menuItem.setChecked(true);
-                    switch (menuItem.getItemId()) {
-                        case R.id.navigation_item_images:
-
-                            Log.d("DEBUG", "Ratings clicked");
-                            if (globalMarkers.size() == 0) {
-                                Log.d("DEBUG", "Size of markers" + globalMarkers.size());
-                                Snackbar.make(findViewById(R.id.drawer_layout), "Please search a cafe first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
-                                    @Override
-                                    public void onClick(View v) {
-                                    }
-                                }).show();
-                            } else {
-                                globalMarkers.clear();
-                                Log.d("DEBUG", "Size of Markers after clear" + globalMarkers.size());
-                                sortRatings();
-                                Intent i = new Intent(MainActivity.this, Main2Activity.class);
-                                i.putParcelableArrayListExtra("MyObj", resultsList);
-                                startActivity(i);
-                                removeMarkers();
-                            }
-                            break;
-                        case R.id.navigation_item_location:
-                            Toast.makeText(MainActivity.this, "My Location clicked", Toast.LENGTH_SHORT).show();
-                            Log.d("DEBUG", "Next clicked");
-                            break;
-                        default:
-                            Toast.makeText(MainActivity.this, "In default case", Toast.LENGTH_SHORT).show();
+            } else {
+                Snackbar.make(findViewById(R.id.drawer_layout), "Not able to connect to the Internet", Snackbar.LENGTH_LONG).setAction("Exit and Try Again", new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        System.exit(1);
                     }
-                    mDrawerLayout.closeDrawers();
-                    return true;
+                }).show();
+            }
+        } else { // Exit the application
+            Snackbar.make(findViewById(R.id.drawer_layout), "Google Play Services NOT INSTALLED!! Exiting the application ...", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
+                @Override
+                public void onClick(View v) {
                 }
-            });
-            _initMap();
-            handleIntent(getIntent());
-            buildGoogleApiClient();
+            }).show();
+            // Google play services absent; exit the application
+            System.exit(1);
         }
     }
 
-        public boolean isNetworkAvailable(Context context)
+    public boolean isGPSEnabled (Context mContext){
+        locationManager = (LocationManager) mContext.getSystemService(Context.LOCATION_SERVICE);
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+    }
+
+    // Check if google play services installed
+    private boolean servicesPresent() {
+        // Getting status
+        int status = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this.getBaseContext());
+        // Showing status
+        if(status==ConnectionResult.SUCCESS)
+            return true;
+        else
+            return false;
+    }
+
+
+
+    // Initialize and build layout
+    private void _init(Bundle savedInstanceState) {
+        mapView = (MapView) findViewById(R.id.mapview);
+        mDrawerLayout = (DrawerLayout) findViewById(R.id.drawer_layout);
+        navigationView = (NavigationView) findViewById(R.id.navigation_view);
+        mapView.onCreate(savedInstanceState);
+        buildGoogleApiClient();
+        getSupportActionBar().setHomeAsUpIndicator(R.drawable.ic_menu);
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+        mDrawerLayout.setDrawerShadow(R.drawable.drawer_shadow, GravityCompat.START);
+    }
+
+    // OnClick handlers for NavigationView Items
+    private void navigationViewListeners() {
+        navigationView.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(MenuItem menuItem) {
+                menuItem.setChecked(true);
+                switch (menuItem.getItemId()) {
+                    case R.id.navigation_item_images:
+                        if (globalMarkers.size() == 0) {
+                            Snackbar.make(findViewById(R.id.drawer_layout), "Please search a cafe first", Snackbar.LENGTH_LONG).setAction("DISMISS", new View.OnClickListener() {
+                                @Override
+                                public void onClick(View v) {}
+                            }).show();
+                        } else {
+                            // Remove markers and navigate to new activity
+                            globalMarkers.clear();
+                            sortRatings();
+                            Intent i = new Intent(MainActivity.this, Main2Activity.class);
+                            i.putParcelableArrayListExtra("MyObj", resultsList);
+                            startActivity(i);
+                            removeMarkers();
+                        }
+                        break;
+                    case R.id.navigation_item_location:
+                        //Place current location marker
+                        LatLng latLng = new LatLng(_latitude,_longitude);
+                        MarkerOptions markerOptions = new MarkerOptions();
+                        markerOptions.position(latLng);
+                        markerOptions.title("Current Location");
+                        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_MAGENTA));
+                        mCurrLocationMarker = map.addMarker(markerOptions);
+                        // Navigate camera to current location
+                        cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude, latLng.longitude), 17);
+                        map.animateCamera(cameraUpdate);
+                        break;
+                    default:
+                        Toast.makeText(MainActivity.this, "In default case", Toast.LENGTH_SHORT).show();
+                }
+                mDrawerLayout.closeDrawers();
+                return true;
+            }
+        });
+
+    }
+
+    // Check if the network is available
+    public boolean isNetworkAvailable(Context context)
         {
             ConnectivityManager connectivityManager = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
             NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
             return activeNetworkInfo != null;
         }
 
-    private boolean servicesOK() {
-
-        int isAvailable = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
-
-        if (isAvailable == ConnectionResult.SUCCESS) {
-            return true;
-        } else if (GooglePlayServicesUtil.isUserRecoverableError(isAvailable)) {
-                Log.d("JSON","IN ELSE IF");
-//            Dialog dialog = GooglePlayServicesUtil.getErrorDialog(isAvailable,
-//                    this, GPS_ERRORDIALOG_REQUEST);
-//            dialog.show();
-
-        } else {
-            Toast.makeText(this, "Can not connect!", Toast.LENGTH_SHORT).show();
-        }
-        return false;
-    }
-
+    // Initialize and build GoogleMap
     private void _initMap() {
         map = mapView.getMap();
         map.setMyLocationEnabled(true);
-        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
+//        map.setMapType(GoogleMap.MAP_TYPE_HYBRID);
 
         // Needs to call MapsInitializer before doing any CameraUpdateFactory calls
         try {
@@ -207,11 +256,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         } catch (Exception e) {
             e.printStackTrace();
         }
-
+        // Check for the version of android and request permission if lesser
         if (android.os.Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             checkLocationPermission();
         }
-
     }
 
     private void getLocation(String searchedLocation) {
@@ -226,9 +274,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 e.printStackTrace();
             }
             android.location.Address address = addressList.get(0);
-            String properAddress = String.format("%s, %s",
-                    address.getMaxAddressLineIndex() > 0 ? address.getAddressLine(0) : "",
-                    address.getCountryName());
+            cafeName = address.getFeatureName();
             LatLng latLng = new LatLng(address.getLatitude(), address.getLongitude());
             MarkerOptions markerOptions = new MarkerOptions();
             markerOptions.position(latLng);
@@ -236,35 +282,38 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
             markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_RED));
             mCurrLocationMarker = map.addMarker(markerOptions);
 
-            CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude, latLng.longitude), 8);
+            cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude, latLng.longitude), 14);
             map.animateCamera(cameraUpdate);
         }
     }
 
     public void setMarkers(double lat, double lng, String properAddress) {
+
         MarkerOptions markerOptions = new MarkerOptions();
         LatLng latLng = new LatLng(lat,lng);
         markerOptions.position(latLng);
         markerOptions.title(properAddress);
-        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_GREEN));
+        markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
         Marker tempMarker = map.addMarker(markerOptions);
         globalMarkers.add(tempMarker);
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latLng.latitude, latLng.longitude), 15);
-        map.animateCamera(cameraUpdate);
+
     }
 
     @Override
     public void onConnected(Bundle bundle) {
         mLastLocation = LocationServices.FusedLocationApi.getLastLocation(
                 mGoogleApiClient);
-        latitude = mLastLocation.getLatitude();
-        longitude = mLastLocation.getLongitude();
         if (mLastLocation != null) {
-            Log.d("CREATION",String.valueOf(mLastLocation.getLatitude()));
-            Log.d("CREATION",String.valueOf(mLastLocation.getLongitude()));
+            _latitude = mLastLocation.getLatitude();
+            _longitude = mLastLocation.getLongitude();
+            Log.d(TAG,"LATITUDE VALUE"+_latitude);
+            Log.d(TAG,"LONGITUDE VALUE"+_longitude);
+
         }
+
+
         // Updates the location and zoom of the MapView
-        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(latitude, longitude), 18);
+        CameraUpdate cameraUpdate = CameraUpdateFactory.newLatLngZoom(new LatLng(_latitude, _longitude), 18);
         map.animateCamera(cameraUpdate);
 
     }
@@ -280,12 +329,13 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         if (mCurrLocationMarker != null) {
             mCurrLocationMarker.remove();
         }
+        Log.d(TAG,"Latitude : "+location.getLatitude());
+        Log.d(TAG,"Longitude : "+location.getLongitude());
+
         //Place current location marker
         LatLng latLng = new LatLng(location.getLatitude(), location.getLongitude());
         MarkerOptions markerOptions = new MarkerOptions();
         markerOptions.position(latLng);
-        Log.d("CREATION","Latitude : "+location.getLatitude());
-        Log.d("CREATION","Longitude : "+location.getLongitude());
     }
 
     @Override
@@ -293,19 +343,16 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.options_menu, menu);
 
-
+        // Check for android version and install searchView
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.HONEYCOMB) {
-
             SearchManager manager = (SearchManager) getSystemService(Context.SEARCH_SERVICE);
-
             searchView= (android.support.v7.widget.SearchView) menu.findItem(R.id.action_websearch).getActionView();
-
             searchView.setSearchableInfo(manager.getSearchableInfo(getComponentName()));
 
             searchView.setOnQueryTextListener(new android.support.v7.widget.SearchView.OnQueryTextListener() {
                 @Override
                 public boolean onQueryTextSubmit(String s) {
-                    Log.d("DEBUG","Inside OnQueryTextSubmit");
+                    // Clear the map and query the google places API
                     removeMarkers();
                     try {
                         getLocation(s);
@@ -328,9 +375,10 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     }
     @Override
     public void onConnectionFailed(ConnectionResult connectionResult) {
-        Log.d("CREATION", "Connection failed due to gps");
+        Log.d(TAG, "Connection failed due to gps");
     }
 
+    // Method to build query url for places API
     public StringBuilder getQueryString (double latitude, double longitude) {
 
         //use your current location here
@@ -338,18 +386,17 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         double mLongitude = longitude;
         StringBuilder sb = new StringBuilder("https://maps.googleapis.com/maps/api/place/nearbysearch/json?");
         sb.append("location=" + mLatitude + "," + mLongitude);
-        sb.append("&radius=500");
+        sb.append("&radius=1500");
         sb.append("&types=" + "cafe");
         sb.append("&sensor=true");
         sb.append("&key=AIzaSyCk6xfq4jFcg6Qlz5Nlhn2iUug8pndfIP8");
 
         Log.d("Map", "api: " + sb.toString());
-
         return sb;
     }
+
     private void queryAPI(String searchedLocation) throws IOException {
         List<android.location.Address> addressList = null;
-
         if (searchedLocation != null || !searchedLocation.equals("")) {
             geocoder = new Geocoder(this);
             try {
@@ -371,8 +418,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                     @Override
                     public void onFailure(final Call call, IOException e) {
                         // Error
-
-                        runOnUiThread(new Runnable() {
+                       runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
                                 // For the example, you can show an error dialog or a toast
@@ -384,7 +430,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
 
                     @Override
                     public void onResponse(Call call, final Response response) {
-                        String name,vicinity;
 
                         JSONObject geometryObject, locationObject;
                         try {
@@ -392,32 +437,28 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                             JSONObject Jobject = new JSONObject(res);
                             JSONArray Jarray = Jobject.getJSONArray("results");
                             int limit = Jarray.length();
-                            Log.d("JSON","LIMIT####"+limit);
-
                             for (int i = 0; i < limit; i++) {
                                 JSONObject object     = Jarray.getJSONObject(i);
-                                name = object.getString("name");
                                 try {
                                     rating = Double.parseDouble(object.getString("rating"));
                                 }catch (JSONException e) {
                                     Log.d(TAG,"Rating not found");
 //                                    e.printStackTrace();
                                 }
-                                vicinity = object.getString("vicinity");
                                 geometryObject= object.getJSONObject("geometry");
                                 locationObject= geometryObject.getJSONObject("location");
+                                cafeName = object.getString("name");
+                                cafeAddress = object.getString("vicinity");
                                 latitude = Double.parseDouble(locationObject.getString("lat"));
                                 longitude = Double.parseDouble(locationObject.getString("lng"));
-//                                rating = Double.parseDouble(String.valueOf((rating)));
-                                resultsList.add(new LocationDAO(name,latitude,longitude,vicinity,rating));
 
-                                Log.d("JSON", name + " ## " + rating + "## vicinity ### "+vicinity+"### Geometry ###"+geometryObject+"LOCATION OBJECT #####"+locationObject+"Latitude#####"+latitude);
+                                resultsList.add(new LocationDAO(cafeName,latitude,longitude,cafeAddress,rating));
                             }
                             runOnUiThread(new Runnable() {
                                 @Override
                                 public void run() {
-                                    Log.d("FINALLY","Executing ResultList");
-                                    displayList(resultsList);
+                                    // Place nearby cafe pins on map
+                                    placePins(resultsList);
                                 }
                             });
                         } catch (Exception e) {
@@ -427,46 +468,42 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 });
     }
 
-    private void displayList(List<LocationDAO> resultsList) {
-
+    // Place Markers on Map
+    private void placePins(List<LocationDAO> resultsList) {
         for (LocationDAO g: resultsList) {
-            System.out.print(g.toString() + "\n   ");
-            setMarkers(g.getLatitude(),g.getLongitude(),g.getAddress());
-            System.out.println(g.getAddress());
-            Log.d("JSONLIST", "Address of object $$$$$$"+g.getAddress());
-            System.out.println();
+            setMarkers(g.getLatitude(),g.getLongitude(),g.getName());
+            Log.d(TAG,g.getName());
         }
-        Log.d("JSON","Size of Markers"+globalMarkers.size());
-
     }
 
+    // Sort the searched cafes by Ratings
     public void sortRatings() {
-
         Collections.sort(resultsList, new Comparator<LocationDAO>() {
                     public int compare(LocationDAO object1, LocationDAO object2) {
                         return Double.compare(object2.rating, object1.rating);
                     }
                 }
         );
-
         for (LocationDAO l:resultsList) {
             double r = l.getRating();
-            Log.d("DEBUG","Sorted LIST###"+l.getRating());
+            Log.d(TAG,"Sorted LIST###"+l.getRating());
         }
     }
+
+    // Remove markers and clear map
     private void removeMarkers() {
         resultsList.clear();
         map.clear();
     }
+
     @Override
     public void onMapReady(GoogleMap googleMap) {  }
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-
         int id = item.getItemId();
-
         switch (id) {
+            // Hamburger icon to toggle NavigationDrawer
             case android.R.id.home:
                 mDrawerLayout.openDrawer(GravityCompat.START);
                 return true;
@@ -514,6 +551,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
                 .build();
         mGoogleApiClient.connect();
     }
+
     private void startLocationUpdates() {
 // Create the location request
         mLocationRequest = LocationRequest.create()
@@ -552,13 +590,15 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         super.onLowMemory();
         mapView.onLowMemory();
     }
+
     private void handleIntent(Intent intent) {
         if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
                     String query = intent.getStringExtra(SearchManager.QUERY);
-                    Log.d("DEBUG","My query $$$$$$$$ query"+query);
             }
         }
-       @Override
+
+    // Method for searchable interface
+    @Override
         protected void onNewIntent(Intent intent) {
             handleIntent(intent);
     }
