@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
     // Tag to use for debug
     private static final String TAG = "MAIN_ACTIVITY";
 
-    // okhttp3 library elements --> to make a REST call
+    // okhttp3 library elements --> to make an Async REST call
     private Request request;
     // NavigationDrawer elements
     private DrawerLayout mDrawerLayout;
@@ -302,7 +302,6 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         markerOptions.icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_ORANGE));
         Marker tempMarker = map.addMarker(markerOptions);
         globalMarkers.add(tempMarker);
-
     }
 
     @Override
@@ -612,5 +611,4 @@ public class MainActivity extends AppCompatActivity implements OnMapReadyCallbac
         protected void onNewIntent(Intent intent) {
             handleIntent(intent);
     }
-
 }
